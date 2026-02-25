@@ -1,0 +1,36 @@
+id: gate-checkin
+route: /app/gate/checkin
+roles: [GATE]
+layout: gate-shell
+performance:
+  lazyComponents: [QrScanner]
+data:
+  mutations:
+    - key: checkin
+      endpoint: POST /api/gate/checkin
+    - key: markExited
+      endpoint: POST /api/gate/exited
+ui:
+  inputs: [pinInput, scanQrBtn]
+  resultPanel:
+    states:
+      ok: [appointmentSummary, markArrivedBtn]
+      alreadyArrived: [timestamp, reprintBtn]
+      invalidOrExpired: [message, auditHint]
+  banner:
+    capacityFull: true
+  secondaryAction: [markExitedBtn]
+states:
+  loading: inline-spinner
+  error: toast + retry
+forms:
+  - id: pin
+    zod: PinSchema
+    fields: [pinOrQrToken, eventKey]
+feedback:
+  toasts: [arrived_ok, exited_ok, error_default]
+acceptance:
+  - "Rate-limit UI: desabilitar botão por X ms após submit"
+  - "Nunca logar PIN/QR no console"
+tests:
+  e2e: [checkin_ok, checkin_invalid, mark_exited]

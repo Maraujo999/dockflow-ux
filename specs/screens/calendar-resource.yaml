@@ -1,0 +1,53 @@
+id: calendar-resource
+route: /app/manager/calendar
+roles: [MANAGER]
+layout: app-shell
+performance:
+  lazyComponents: [CalendarGrid]
+  pagination: time-window
+data:
+  queries:
+    - key: sites
+      endpoint: GET /api/sites
+      cache: { staleTimeSec: 300 }
+    - key: resources
+      endpoint: GET /api/resources?siteId=
+      cache: { staleTimeSec: 300 }
+    - key: slots
+      endpoint: GET /api/slots?siteId=&resourceId=&from=&to=
+      cache: { staleTimeSec: 30 }
+  mutations:
+    - key: createBlock
+      endpoint: POST /api/blocks
+    - key: createAppointmentInternal
+      endpoint: POST /api/appointments/internal
+ui:
+  header:
+    title: "Calendar"
+    filters: [siteSelect, resourceSelect, datePicker, filterMenu]
+  grid:
+    slotGranularityMin: [15, 30]
+    cards:
+      BOOKED: [carrierName, operation, vehiclePlate, appointmentStatus]
+      BLOCKED: [reason, ownerName]
+  actions:
+    - CreateBlockModal
+    - CreateAppointmentInternalModal
+    - OpenAppointmentDrawer
+states:
+  loading: skeleton-grid
+  empty: "No slots in this range"
+  error: retry-inline
+forms:
+  - id: create-block
+    zod: CreateBlockSchema
+    fields: [startAt, endAt, reason]
+  - id: create-appointment-internal
+    zod: CreateAppointmentInternalSchema
+feedback:
+  toasts: [block_created, appointment_created, error_default]
+acceptance:
+  - "Mudar filtros refaz query apenas do range atual"
+  - "CTA desabilitado durante mutation (anti double-submit)"
+tests:
+  e2e: [calendar_filtering, create_block_flow]

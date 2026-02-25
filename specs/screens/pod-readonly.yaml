@@ -1,0 +1,26 @@
+id: pod-readonly
+route: /public/pod/{publicId}
+roles: [PUBLIC_READONLY]
+layout: public-shell
+performance:
+  lazyComponents: [PhotoGallery, PdfLinkSection]
+data:
+  queries:
+    - key: podPublic
+      endpoint: GET /public/pods/{publicId}?token=
+      cache: { staleTimeSec: 60 }
+ui:
+  header: [appointmentSummary, timestamps]
+  sections: [checklist, photos, signature, documents, incidents]
+  actions: [downloadPdfBtn]
+states:
+  loading: skeleton
+  error: retry
+security:
+  tokenRequired: true
+  readOnly: true
+acceptance:
+  - "Fotos carregam lazy (thumbnails primeiro)"
+  - "Token não aparece em logs nem é persistido"
+tests:
+  e2e: [pod_public_view]

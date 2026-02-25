@@ -1,0 +1,51 @@
+id: dock-operator-pod
+route: /app/operator/operations
+roles: [OPERATOR]
+layout: app-shell
+performance:
+  lazyComponents: [SignatureCanvas, PhotoUploader]
+data:
+  queries:
+    - key: todaysAppointments
+      endpoint: GET /api/appointments?siteId=&status=ARRIVED,DOCKED&cursor=&limit=
+      cache: { staleTimeSec: 10 }
+    - key: appointmentDetail
+      endpoint: GET /api/appointments/{id}
+      cache: { staleTimeSec: 10 }
+  mutations:
+    - key: startDocking
+      endpoint: POST /api/appointments/{id}/dock
+    - key: complete
+      endpoint: POST /api/appointments/{id}/complete
+    - key: podSave
+      endpoint: PUT /api/pods/{id}
+    - key: podFinalize
+      endpoint: POST /api/pods/{id}/finalize
+ui:
+  list:
+    cardFields: [status, carrier, docsCount]
+    actions: [openDetail]
+  detail:
+    cta: [startDockingBtn, completeBtn]
+    pod:
+      checklist: checkboxList
+      photos: multiUpload
+      signature: canvas
+      notes: textarea
+      incident:
+        toggle: true
+        fields: [type, notesOptional, photos]
+states:
+  loading: skeleton
+  empty: "No appointments"
+  error: retry
+forms:
+  - id: pod
+    zod: PodSchema
+feedback:
+  toasts: [docked, completed, pod_saved, pod_finalized, error_default]
+acceptance:
+  - "Upload direto para storage via URL pré-assinada"
+  - "Salvar POD incremental (draft) sem perder dados"
+tests:
+  e2e: [start_docking, fill_pod_and_finalize]

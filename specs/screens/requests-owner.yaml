@@ -1,0 +1,52 @@
+id: requests-owner
+route: /app/manager/requests
+roles: [MANAGER]
+layout: app-shell
+performance:
+  pagination: cursor
+data:
+  queries:
+    - key: requests
+      endpoint: GET /api/appointments?status=REQUESTED&siteId=&cursor=&limit=
+      cache: { staleTimeSec: 10 }
+    - key: freeSlotsForProposal
+      endpoint: GET /api/slots/free?siteId=&resourceId=&from=&to=
+      cache: { staleTimeSec: 10 }
+  mutations:
+    - key: approve
+      endpoint: POST /api/appointments/{id}/approve
+    - key: reject
+      endpoint: POST /api/appointments/{id}/reject
+    - key: proposeNewTime
+      endpoint: POST /api/appointments/{id}/propose
+ui:
+  table:
+    columns: [requestId, startAt, carrier, vehicle, fitStatus, reason]
+    rowActions: [ApproveBtn, RejectBtn, ProposeBtn]
+  modals:
+    - RejectModal
+    - ProposeNewTimeModal
+states:
+  loading: skeleton-table
+  empty: "No requests"
+  error: retry-inline
+logic:
+  holdExpiry:
+    field: hold_expires_at
+    behavior:
+      expiredLabel: true
+      optionalReopen: false
+forms:
+  - id: reject
+    zod: RejectSchema
+    fields: [reasonOptional]
+  - id: propose
+    zod: ProposeSchema
+    fields: [slotId, noteOptional]
+feedback:
+  toasts: [approved, rejected, proposed, error_default]
+acceptance:
+  - "Paginação por cursor (não carregar tudo)"
+  - "Se request expirar, UI mostra badge 'expired' e bloqueia aprovar"
+tests:
+  e2e: [approve_request, propose_new_time]

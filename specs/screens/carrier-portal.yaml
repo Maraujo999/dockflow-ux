@@ -1,0 +1,49 @@
+id: carrier-portal
+route: /public/book
+roles: [PUBLIC]
+layout: public-shell
+performance:
+  lazyComponents: [SimplifiedSlotsList]
+  pagination: time-window
+data:
+  queries:
+    - key: publicSites
+      endpoint: GET /public/sites
+      cache: { staleTimeSec: 600 }
+    - key: availability
+      endpoint: GET /public/availability?siteId=&operation=&vehicleProfile=&from=&to=
+      cache: { staleTimeSec: 20 }
+  mutations:
+    - key: createBooking
+      endpoint: POST /public/appointments
+ui:
+  flow:
+    stepper:
+      - operation
+      - vehicleProfile
+      - slotSelection
+      - bookingModal
+      - confirmation
+  bookingModal:
+    fields:
+      - documents.references
+      - notes
+      - attachmentsOptional
+    cta:
+      FIT: "Book"
+      REQUIRES_APPROVAL: "Request"
+states:
+  loading: skeleton-cards
+  empty: "No free slots"
+  error: retry-inline
+forms:
+  - id: booking
+    zod: BookingSchema
+    fields: [operation, vehicleProfile, slotId, references, notesOptional]
+feedback:
+  toasts: [booking_created, request_sent, error_default]
+acceptance:
+  - "Não exibir dados internos do tenant"
+  - "Não carregar slots de semanas inteiras; só janela visível"
+tests:
+  e2e: [public_booking_fit, public_request_requires_approval]
